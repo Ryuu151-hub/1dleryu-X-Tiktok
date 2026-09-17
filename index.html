@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>1dleryu Patcher — Zernio Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0c0c0c;
+      --card: #161616;
+      --border: rgba(255,255,255,0.08);
+      --text: #f2f2f2;
+      --muted: #9a9a9a;
+      --amber: #f0900a;
+      --green: #3dd68c;
+      --red: #e05060;
+      --glass: rgba(255,255,255,0.04);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Inter, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.45;
+    }
+    body.booting .shell { visibility: hidden; }
+    .maintenance {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .maintenance[hidden] { display: none !important; }
+    .maintenance-card {
+      max-width: 420px; width: 100%; text-align: center;
+      padding: 36px 28px; border-radius: 20px;
+      border: 1px solid var(--border); background: var(--card);
+    }
+    .maintenance-card h1 { font-size: 20px; font-weight: 800; margin-bottom: 10px; }
+    .maintenance-card p { color: var(--muted); font-size: 14px; }
+
+    .shell { max-width: 480px; margin: 0 auto; padding: 28px 16px 48px; }
+    .brand { margin-bottom: 20px; }
+    .brand h1 { font-size: 26px; font-weight: 900; letter-spacing: -0.02em; }
+    .brand h1 span { color: var(--amber); }
+    .brand p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+    .user-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 16px; padding: 10px 14px;
+      border-radius: 12px; border: 1px solid var(--border); background: var(--glass);
+      font-size: 12px; color: var(--muted);
+    }
+    .user-bar strong { color: var(--text); font-weight: 600; }
+    .btn-text {
+      border: none; background: transparent; color: var(--amber);
+      font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px 18px;
+      margin-bottom: 14px;
+    }
+    .card h2 {
+      font-size: 11px; font-weight: 800; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--amber); margin-bottom: 14px;
+    }
+
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    input[type="password"] {
+      width: 100%; min-height: 48px; border-radius: 14px;
+      border: 1.5px solid var(--border); background: var(--glass);
+      color: var(--text); padding: 0 14px; font-size: 13px;
+      font-family: inherit; outline: none;
+    }
+    input:focus { border-color: rgba(240,144,10,0.55); }
+
+    .btn {
+      width: 100%; min-height: 48px; margin-top: 12px;
+      border-radius: 14px; border: none;
+      background: linear-gradient(135deg, #f0900a 0%, #c46a00 100%);
+      color: #111; font-size: 12px; font-weight: 800;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      cursor: pointer; font-family: inherit;
+    }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-ghost {
+      background: var(--glass); border: 1px solid var(--border); color: #fff;
+    }
+    .btn-row { display: flex; gap: 10px; margin-top: 12px; }
+    .btn-row .btn { margin-top: 0; flex: 1; }
+
+    .hint { font-size: 12px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+    .hint a { color: var(--amber); }
+
+    .err {
+      margin-top: 12px; padding: 12px 14px; border-radius: 12px;
+      background: rgba(224,80,96,0.1); border: 1px solid rgba(224,80,96,0.35);
+      color: #ff8a96; font-size: 13px; display: none;
+    }
+    .err.show { display: block; }
+
+    .drop {
+      border: 1.5px dashed var(--border);
+      border-radius: 14px;
+      padding: 28px 16px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--glass);
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .drop:hover, .drop.drag { border-color: rgba(240,144,10,0.5); background: rgba(240,144,10,0.06); }
+    .drop-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .drop-sub { font-size: 12px; color: var(--muted); }
+    .file-name {
+      margin-top: 12px; font-size: 13px; font-weight: 600;
+      color: var(--amber); word-break: break-all; display: none;
+    }
+    .file-name.show { display: block; }
+
+    .status {
+      margin-top: 12px; font-size: 12px; color: var(--muted);
+      min-height: 18px;
+    }
+    .status.ok { color: var(--green); }
+    .status.err { color: var(--red); }
+    .status.busy { color: var(--amber); }
+
+    #fileInput { display: none; }
+    #loginView[hidden], #appView[hidden] { display: none !important; }
+  </style>
+</head>
+<body class="booting">
+  <div class="maintenance" id="maintenance" hidden>
+    <div class="maintenance-card">
+      <h1>Maintenance Mode</h1>
+      <p id="maintenanceMsg">This website is in maintenance mode.</p>
+    </div>
+  </div>
+
+  <div class="shell">
+    <div class="brand">
+      <h1>1dleryu <span>Patcher</span></h1>
+      <p>Zernio login · MP4 patch · download</p>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginView">
+      <div class="card">
+        <h2>Login with Zernio</h2>
+        <label for="apiKeyInput">Your Zernio API key</label>
+        <input type="password" id="apiKeyInput" placeholder="sk_…" autocomplete="off" spellcheck="false">
+        <button class="btn" type="button" id="loginBtn">Login</button>
+        <p class="hint">
+          Create a key at
+          <a href="https://zernio.com/dashboard/api-keys" target="_blank" rel="noopener">zernio.com</a>.
+        </p>
+        <div class="err" id="loginErr"></div>
+      </div>
+    </div>
+
+    <!-- PATCHER -->
+    <div id="appView" hidden>
+      <div class="user-bar">
+        <span>Signed in · <strong id="userLabel">—</strong></span>
+        <button type="button" class="btn-text" id="logoutBtn">Logout</button>
+      </div>
+
+      <div class="card">
+        <h2>Video</h2>
+        <div class="drop" id="dropZone">
+          <div class="drop-title">Select MP4 file</div>
+          <div class="drop-sub">Tap or drop a .mp4 here</div>
+          <div class="file-name" id="fileName"></div>
+        </div>
+        <input type="file" id="fileInput" accept="video/mp4,.mp4">
+
+        <div class="btn-row">
+          <button class="btn btn-ghost" type="button" id="patchBtn" disabled>Patch</button>
+          <button class="btn" type="button" id="downloadBtn" disabled>Download</button>
+        </div>
+        <div class="status" id="status"></div>
+        <p class="hint">Output name: <code>[original]-1dleryu.mp4</code>. Engine: <code>engine.js</code> (editable on GitHub).</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/engine.js"></script>
+  <script>
+  (function () {
+    const $ = (id) => document.getElementById(id);
+
+    let selectedFile = null;
+    let patchedBlob = null;
+    let patchedName = '';
+
+    function showErr(el, msg) {
+      el.textContent = msg || '';
+      el.classList.toggle('show', !!msg);
+    }
+    function setStatus(msg, kind) {
+      const s = $('status');
+      s.textContent = msg || '';
+      s.className = 'status' + (kind ? ' ' + kind : '');
+    }
+    function showLogin() {
+      $('loginView').hidden = false;
+      $('appView').hidden = true;
+    }
+    function showApp(user) {
+      $('loginView').hidden = true;
+      $('appView').hidden = false;
+      $('userLabel').textContent = user?.keyHint || user?.userId || 'user';
+    }
+
+    async function boot() {
+      try {
+        const cfg = await fetch('/api/config', { credentials: 'include', cache: 'no-store' }).then((r) => r.json());
+        if (cfg.maintenance) {
+          $('maintenanceMsg').textContent = cfg.message || 'Maintenance mode.';
+          $('maintenance').hidden = false;
+          document.body.classList.remove('booting');
+          return;
+        }
+      } catch { /* continue */ }
+
+      try {
+        const me = await fetch('/api/auth/me', { credentials: 'include', cache: 'no-store' }).then((r) => r.json());
+        if (me.loggedIn) showApp(me.user);
+        else showLogin();
+      } catch {
+        showLogin();
+      }
+      document.body.classList.remove('booting');
+    }
+
+    // ── Auth ──
+    $('loginBtn').addEventListener('click', async () => {
+      const apiKey = ($('apiKeyInput').value || '').trim();
+      showErr($('loginErr'), '');
+      if (!apiKey) return showErr($('loginErr'), 'Paste your Zernio API key.');
+      $('loginBtn').disabled = true;
+      $('loginBtn').textContent = '…';
+      try {
+        const r = await fetch('/api/auth/login', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ apiKey }),
+        });
+        const data = await r.json();
+        if (!data.ok) {
+          showErr($('loginErr'), data.error || 'Login failed');
+          return;
+        }
+        $('apiKeyInput').value = '';
+        showApp(data.user);
+      } catch (e) {
+        showErr($('loginErr'), e.message || 'Network error');
+      } finally {
+        $('loginBtn').disabled = false;
+        $('loginBtn').textContent = 'Login';
+      }
+    });
+    $('apiKeyInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') $('loginBtn').click();
+    });
+    $('logoutBtn').addEventListener('click', async () => {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      selectedFile = null;
+      patchedBlob = null;
+      $('fileInput').value = '';
+      $('fileName').classList.remove('show');
+      $('patchBtn').disabled = true;
+      $('downloadBtn').disabled = true;
+      setStatus('');
+      showLogin();
+    });
+
+    // ── File select ──
+    const drop = $('dropZone');
+    const fileInput = $('fileInput');
+
+    function pickFile(file) {
+      if (!file) return;
+      const name = (file.name || '').toLowerCase();
+      if (!name.endsWith('.mp4') && file.type !== 'video/mp4') {
+        setStatus('Please select an MP4 file.', 'err');
+        return;
+      }
+      selectedFile = file;
+      patchedBlob = null;
+      patchedName = '';
+      $('fileName').textContent = file.name;
+      $('fileName').classList.add('show');
+      $('patchBtn').disabled = false;
+      $('downloadBtn').disabled = true;
+      setStatus('Ready — click Patch.', 'ok');
+    }
+
+    drop.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+      pickFile(fileInput.files && fileInput.files[0]);
+    });
+    drop.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      drop.classList.add('drag');
+    });
+    drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+    drop.addEventListener('drop', (e) => {
+      e.preventDefault();
+      drop.classList.remove('drag');
+      const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      pickFile(f);
+    });
+
+    // ── Patch ──
+    $('patchBtn').addEventListener('click', async () => {
+      if (!selectedFile) return;
+      if (!window.IdleryuPatch || typeof window.IdleryuPatch.patch !== 'function') {
+        setStatus('Error: engine.js failed to load.', 'err');
+        return;
+      }
+      $('patchBtn').disabled = true;
+      $('downloadBtn').disabled = true;
+      setStatus('Patching…', 'busy');
+      try {
+        const buf = await selectedFile.arrayBuffer();
+        const input = new Uint8Array(buf);
+        const out = window.IdleryuPatch.patch(input);
+        if (!out || !out.length) throw new Error('Empty output from engine');
+        patchedBlob = new Blob([out], { type: 'video/mp4' });
+        const base = selectedFile.name.replace(/\.mp4$/i, '') || 'video';
+        patchedName = base + '-1dleryu.mp4';
+        $('downloadBtn').disabled = false;
+        setStatus('Done — click Download.', 'ok');
+      } catch (e) {
+        patchedBlob = null;
+        setStatus(e.message || 'Patch failed', 'err');
+      } finally {
+        $('patchBtn').disabled = !selectedFile;
+      }
+    });
+
+    // ── Download ──
+    $('downloadBtn').addEventListener('click', () => {
+      if (!patchedBlob) return;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(patchedBlob);
+      a.download = patchedName || 'video-1dleryu.mp4';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        URL.revokeObjectURL(a.href);
+        a.remove();
+      }, 1000);
+    });
+
+    boot();
+  })();
+  </script>
+</body>
+</html>
